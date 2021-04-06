@@ -42,7 +42,7 @@ impl Palette {
             &matrix,
             KMeansParameters::default().with_k(self.find_best_k()),
         )?;
-        let ret = k_means.predict(&matrix).unwrap();
+        let ret = k_means.predict(&matrix)?;
         let mut cluster_map: HashMap<u64, ColorCluster> = HashMap::new();
 
         for (i, label) in ret.iter().enumerate() {

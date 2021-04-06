@@ -7,7 +7,7 @@ const MAX_SIZE: usize = 400;
 pub fn fetch_image(path: &str) -> Result<image::DynamicImage, Box<dyn std::error::Error>> {
     let rt = runtime::Runtime::new()?;
     let bytes = rt.block_on(async { reqwest::get(path).await?.bytes().await })?;
-    let img = image::load_from_memory(&bytes).unwrap();
+    let img = image::load_from_memory(&bytes)?;
     Ok(img)
 }
 
