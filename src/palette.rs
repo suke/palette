@@ -1,6 +1,7 @@
 use crate::color_cluster::ColorCluster;
 use crate::colors::Colors;
 use crate::image::{fetch_image, resize};
+use crate::palette_options::PaletteOptions;
 use crate::rgb::Rgb;
 use image::GenericImageView;
 use smartcore::cluster::kmeans::*;
@@ -12,23 +13,30 @@ use std::fmt::Debug;
 #[derive(Debug)]
 pub struct Palette {
     pixels: Vec<Rgb>,
+    options: PaletteOptions,
 }
 
 impl Palette {
-    pub fn from_local_image(image_path: &str) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn from_local_image(
+        image_path: &str,
+        options: PaletteOptions,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
         let image = image::open(image_path)?;
-        Ok(Palette::from(image))
+        Ok(Palette::from(image, options))
     }
 
-    pub fn from_remote_image(url: &str) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn from_remote_image(
+        url: &str,
+        options: PaletteOptions,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
         let image = fetch_image(url)?;
-        Ok(Palette::from(image))
+        Ok(Palette::from(image, options))
     }
 
-    fn from(image: image::DynamicImage) -> Self {
+    fn from(image: image::DynamicImage, options: PaletteOptions) -> Self {
         let resized_image = resize(image);
-        let pixels = Palette::make_pixels(resized_image);
-        Palette { pixels }
+        let pixels = Palette::make_pixels(resized_image, &options);
+        Palette { pixels, options }
     }
 
     pub fn inspect(&self) -> Result<Vec<Rgb>, Box<dyn std::error::Error>> {
@@ -77,15 +85,13 @@ impl Palette {
         }
     }
 
-    fn make_pixels(image: image::DynamicImage) -> Vec<Rgb> {
+    fn make_pixels(image: image::DynamicImage, options: &PaletteOptions) -> Vec<Rgb> {
         let mut data: Vec<Rgb> = vec![];
-        let white = Rgb(255, 255, 255);
-        let black = Rgb(0, 0, 0);
         for v in 0..image.height() {
             for u in 0..image.width() {
                 let pix = image.get_pixel(u, v);
                 let rgb = Rgb(pix[0], pix[1], pix[2]);
-                if rgb != white && rgb != black {
+                if !options.colors.contains(&rgb) {
                     data.push(rgb);
                 }
             }
